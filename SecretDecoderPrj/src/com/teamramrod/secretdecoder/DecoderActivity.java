@@ -6,12 +6,16 @@ import org.opencv.android.LoaderCallbackInterface;
 import org.opencv.android.OpenCVLoader;
 import org.opencv.android.CameraBridgeViewBase.CvCameraViewFrame;
 import org.opencv.android.CameraBridgeViewBase.CvCameraViewListener2;
+import org.opencv.core.Core;
 import org.opencv.core.Mat;
+import org.opencv.core.MatOfPoint;
+import org.opencv.core.Scalar;
 import org.opencv.core.Size;
 import org.opencv.imgproc.Imgproc;
 
 import com.teamramrod.secertdecoder.R;
 
+import android.R.bool;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
@@ -37,11 +41,10 @@ public class DecoderActivity extends Activity implements CvCameraViewListener2,
 
 	private Mat mGray;
 	private Mat mTemp;
-	private Mat mZoom;
+	private Mat blackMat;
+	private Scalar blackSum;
 
 	private CameraBridgeViewBase mOpenCvCameraView;
-	private GestureDetector mGestureDetector;
-
 	private BaseLoaderCallback mLoaderCallback = new BaseLoaderCallback(this) {
 		@Override
 		public void onManagerConnected(int status) {
@@ -71,7 +74,7 @@ public class DecoderActivity extends Activity implements CvCameraViewListener2,
 		mOpenCvCameraView.enableFpsMeter();
 		mOpenCvCameraView.setCvCameraViewListener(this);
 
-		mGestureDetector = new GestureDetector(this, this);
+		new GestureDetector(this, this);
 
 		// viewMode = VIEW_MODE_ZOOM;
 		displayViewModeToUser();
@@ -139,24 +142,36 @@ public class DecoderActivity extends Activity implements CvCameraViewListener2,
 	public void onCameraViewStarted(int width, int height) {
 		mGray = new Mat();
 		mTemp = new Mat();
-		mZoom = new Mat();
+		// mZoom = new Mat();
+		blackMat = new Mat(new Size(512, 288), 0, new Scalar(0));
+		blackSum = Core.sumElems(blackMat);
 	}
 
 	@Override
 	public void onCameraViewStopped() {
 		// TODO Auto-generated method stub
-		mGray = null;
-		mTemp = null;
-		mZoom = null;
+		if (mGray != null)
+			mGray.release();
+		if (mTemp != null)
+			mTemp.release();
+		// if(mZoom != null)
+		// mZoom.release();
 	}
 
 	@Override
 	public Mat onCameraFrame(CvCameraViewFrame inputFrame) {
 		mGray = inputFrame.gray();
-		Imgproc.resize(mGray, mTemp, mGray.size(), 0.5, 0.5, Imgproc.CV_MEDIAN);
-		Imgproc.GaussianBlur(mTemp, mTemp, new Size(5, 5), 0.0);
-		// Imgproc.Canny(mTemp, mTemp, 90, 100);
-		Imgproc.threshold(mTemp, mTemp, 150, 255, 0);
+		Imgproc.GaussianBlur(mGray, mTemp, new Size(5, 5), 0.0);
+		Imgproc.threshold(mTemp, mTemp, 200, 255, 0);
+
+		System.out.println("frame size: " + mTemp.rows() + "x" + mTemp.cols() + " | type: " + mTemp.type());
+		Scalar dimSum = Core.sumElems(mTemp);
+		System.out.println("black sum: " + blackSum.val[0] + ", " + blackSum.val[1] + ", " + blackSum.val[2] + " | " + "dimSum: "
+				+ dimSum.val[0] + ", " + dimSum.val[1] + ", " + dimSum.val[2]);
+		boolean match = blackSum.val[0] == dimSum.val[0]
+				&& blackSum.val[1] == dimSum.val[1]
+				&& blackSum.val[2] == dimSum.val[2];
+		System.out.println("what's the word: " + match);
 		return mTemp;
 	}
 
