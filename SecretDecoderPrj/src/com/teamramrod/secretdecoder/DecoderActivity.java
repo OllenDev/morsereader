@@ -7,6 +7,8 @@ import org.opencv.android.OpenCVLoader;
 import org.opencv.android.CameraBridgeViewBase.CvCameraViewFrame;
 import org.opencv.android.CameraBridgeViewBase.CvCameraViewListener2;
 import org.opencv.core.Mat;
+import org.opencv.core.Size;
+import org.opencv.imgproc.Imgproc;
 
 import com.teamramrod.secertdecoder.R;
 
@@ -17,79 +19,88 @@ import android.util.Log;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.WindowManager;
+import android.widget.Toast;
 
-public class DecoderActivity extends Activity implements CvCameraViewListener2, GestureDetector.OnGestureListener {
+public class DecoderActivity extends Activity implements CvCameraViewListener2,
+		GestureDetector.OnGestureListener {
 	private static final String TAG = "DecoderActivity";
 	private static int REQUEST_CODE = 23;
-	
+
 	public static void call(Activity activity) {
-        activity.startActivityForResult(new Intent(activity, DecoderActivity.class), REQUEST_CODE);
-    }
-	
-    public DecoderActivity() {
-        Log.i(TAG, "new " + this.getClass());
-    }
-	
+		activity.startActivityForResult(new Intent(activity,
+				DecoderActivity.class), REQUEST_CODE);
+	}
+
+	public DecoderActivity() {
+		Log.i(TAG, "new " + this.getClass());
+	}
+
+	private Mat mGray;
+	private Mat mTemp;
+	private Mat mZoom;
+
 	private CameraBridgeViewBase mOpenCvCameraView;
 	private GestureDetector mGestureDetector;
-	
-	private BaseLoaderCallback  mLoaderCallback = new BaseLoaderCallback(this) {
-        @Override
-        public void onManagerConnected(int status) {
-            switch (status) {
-                case LoaderCallbackInterface.SUCCESS:
-                {
-                    Log.i(TAG, "OpenCV loaded successfully");
-                    mOpenCvCameraView.enableView();
-                } break;
-                default:
-                {
-                    super.onManagerConnected(status);
-                } break;
-            }
-        }
-    };
-	
+
+	private BaseLoaderCallback mLoaderCallback = new BaseLoaderCallback(this) {
+		@Override
+		public void onManagerConnected(int status) {
+			switch (status) {
+			case LoaderCallbackInterface.SUCCESS: {
+				Log.i(TAG, "OpenCV loaded successfully");
+				mOpenCvCameraView.enableView();
+			}
+				break;
+			default: {
+				super.onManagerConnected(status);
+			}
+				break;
+			}
+		}
+	};
+
 	@Override
-    public void onCreate(Bundle savedInstanceState) {
-        Log.i(TAG, "called onCreate");
-        super.onCreate(savedInstanceState);
-        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+	public void onCreate(Bundle savedInstanceState) {
+		Log.i(TAG, "called onCreate");
+		super.onCreate(savedInstanceState);
+		getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
-        setContentView(R.layout.activity_main);
+		setContentView(R.layout.activity_main);
 
-        mOpenCvCameraView = (CameraBridgeViewBase) findViewById(R.id.image_manipulations_activity_surface_view);
-        mOpenCvCameraView.enableFpsMeter();
-        mOpenCvCameraView.setCvCameraViewListener(this);
-        
-        mGestureDetector = new GestureDetector(this, this);
-    }
+		mOpenCvCameraView = (CameraBridgeViewBase) findViewById(R.id.image_manipulations_activity_surface_view);
+		mOpenCvCameraView.enableFpsMeter();
+		mOpenCvCameraView.setCvCameraViewListener(this);
 
-    @Override
-    public void onPause()
-    {
-        super.onPause();
-        if (mOpenCvCameraView != null)
-            mOpenCvCameraView.disableView();
-    }
+		mGestureDetector = new GestureDetector(this, this);
 
-    @Override
-    public void onResume()
-    {
-        super.onResume();
-        OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION_2_4_3, this, mLoaderCallback);
-    }
+		// viewMode = VIEW_MODE_ZOOM;
+		displayViewModeToUser();
+	}
 
-    public void onDestroy() {
-        super.onDestroy();
-        if (mOpenCvCameraView != null)
-            mOpenCvCameraView.disableView();
-    }
-		
+	@Override
+	public void onPause() {
+		super.onPause();
+		if (mOpenCvCameraView != null)
+			mOpenCvCameraView.disableView();
+	}
+
+	@Override
+	public void onResume() {
+		super.onResume();
+		OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION_2_4_3, this,
+				mLoaderCallback);
+	}
+
+	public void onDestroy() {
+		super.onDestroy();
+		if (mOpenCvCameraView != null)
+			mOpenCvCameraView.disableView();
+	}
+
 	@Override
 	public boolean onDown(MotionEvent arg0) {
 		// TODO Auto-generated method stub
-		return false;
+		return true;
 	}
 
 	@Override
@@ -102,7 +113,7 @@ public class DecoderActivity extends Activity implements CvCameraViewListener2, 
 	@Override
 	public void onLongPress(MotionEvent arg0) {
 		// TODO Auto-generated method stub
-		
+
 	}
 
 	@Override
@@ -115,7 +126,7 @@ public class DecoderActivity extends Activity implements CvCameraViewListener2, 
 	@Override
 	public void onShowPress(MotionEvent arg0) {
 		// TODO Auto-generated method stub
-		
+
 	}
 
 	@Override
@@ -126,19 +137,30 @@ public class DecoderActivity extends Activity implements CvCameraViewListener2, 
 
 	@Override
 	public void onCameraViewStarted(int width, int height) {
-		// TODO Auto-generated method stub
-		
+		mGray = new Mat();
+		mTemp = new Mat();
+		mZoom = new Mat();
 	}
 
 	@Override
 	public void onCameraViewStopped() {
 		// TODO Auto-generated method stub
-		
+		mGray = null;
+		mTemp = null;
+		mZoom = null;
 	}
 
 	@Override
 	public Mat onCameraFrame(CvCameraViewFrame inputFrame) {
-		// TODO Auto-generated method stub
-		return null;
+		mGray = inputFrame.gray();
+		Imgproc.resize(mGray, mTemp, mGray.size(), 0.5, 0.5, Imgproc.CV_MEDIAN);
+		Imgproc.GaussianBlur(mTemp, mTemp, new Size(5, 5), 0.0);
+		// Imgproc.Canny(mTemp, mTemp, 90, 100);
+		Imgproc.threshold(mTemp, mTemp, 150, 255, 0);
+		return mTemp;
+	}
+
+	private void displayViewModeToUser() {
+		Toast.makeText(this, "Car 23", Toast.LENGTH_SHORT).show();
 	}
 }
