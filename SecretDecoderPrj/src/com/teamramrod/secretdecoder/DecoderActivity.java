@@ -8,14 +8,13 @@ import org.opencv.android.CameraBridgeViewBase.CvCameraViewFrame;
 import org.opencv.android.CameraBridgeViewBase.CvCameraViewListener2;
 import org.opencv.core.Core;
 import org.opencv.core.Mat;
-import org.opencv.core.MatOfPoint;
+import org.opencv.core.Point;
 import org.opencv.core.Scalar;
 import org.opencv.core.Size;
 import org.opencv.imgproc.Imgproc;
 
 import com.teamramrod.secertdecoder.R;
 
-import android.R.bool;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
@@ -39,12 +38,16 @@ public class DecoderActivity extends Activity implements CvCameraViewListener2,
 		Log.i(TAG, "new " + this.getClass());
 	}
 
-	private Mat mGray;
-	private Mat mTemp;
+	private Mat grayMat;
+	private Mat tempMat;
 	private Mat blackMat;
 	private Scalar blackSum;
+	private Mat zoomCorner;
+	private Mat zoomWindow;
+	private Size grayMatSize;
 
 	private CameraBridgeViewBase mOpenCvCameraView;
+	
 	private BaseLoaderCallback mLoaderCallback = new BaseLoaderCallback(this) {
 		@Override
 		public void onManagerConnected(int status) {
@@ -140,42 +143,105 @@ public class DecoderActivity extends Activity implements CvCameraViewListener2,
 
 	@Override
 	public void onCameraViewStarted(int width, int height) {
-		mGray = new Mat();
-		mTemp = new Mat();
+		grayMat = new Mat();
+		tempMat = new Mat();
+		zoomCorner = new Mat();
+		zoomWindow = new Mat();
 		// mZoom = new Mat();
-		blackMat = new Mat(new Size(512, 288), 0, new Scalar(0));
+		//blackMat = new Mat(new Size(512, 288), 0, new Scalar(0));
+		//blackSum = Core.sumElems(blackMat);
+		StartSubmats();
+	}
+
+	private void StartSubmats() {
+		if (grayMat.empty())
+			return;
+
+		grayMatSize = grayMat.size();
+		System.out.println("GrayMatSize: " + grayMatSize.width + "x" + grayMatSize.height);
+		int rows = (int) grayMatSize.height;
+		int cols = (int) grayMatSize.width;
+
+//		int left = cols / 8;
+//		int top = rows / 8;
+//
+//		int width = cols * 3 / 4;
+//		int height = rows * 3 / 4;
+
+		if (zoomCorner == null) {
+			zoomCorner = grayMat.submat(0, rows / 2 - rows / 10, 0, cols / 2 - cols / 10);
+		} else if(zoomCorner.size().height == 0 || zoomCorner.size().width == 0){
+			zoomCorner = grayMat.submat(0, rows / 2 - rows / 10, 0, cols / 2 - cols / 10);
+		}
+				
+		if (zoomWindow == null) {
+			//zoomWindow = grayMat.submat(0, rows / 2 - rows / 10, 0, cols / 2 - cols / 10);
+			zoomWindow = grayMat.submat(rows / 2 - 9 * rows / 100, rows / 2 + 9 * rows / 100, cols / 2 - 9 * cols / 100, cols / 2 + 9 * cols / 100);
+		} else if(zoomWindow.size().height == 0 || zoomWindow.size().width == 0){
+			//zoomWindow = grayMat.submat(0, rows / 2 - rows / 10, 0, cols / 2 - cols / 10);
+			zoomWindow = grayMat.submat(rows / 2 - 9 * rows / 100, rows / 2 + 9 * rows / 100, cols / 2 - 9 * cols / 100, cols / 2 + 9 * cols / 100);
+		}
+		
+		blackMat = new Mat(zoomCorner.size(), zoomCorner.type(), Scalar.all(0));
 		blackSum = Core.sumElems(blackMat);
 	}
 
 	@Override
 	public void onCameraViewStopped() {
 		// TODO Auto-generated method stub
-		if (mGray != null)
-			mGray.release();
-		if (mTemp != null)
-			mTemp.release();
-		// if(mZoom != null)
-		// mZoom.release();
+		if (grayMat != null)
+			grayMat.release();
+		if (tempMat != null)
+			tempMat.release();
+		if(zoomCorner != null)
+			zoomCorner.release();
+		if(zoomWindow != null)
+			zoomWindow.release();
+		if(blackMat != null)
+			blackMat.release();
 	}
 
 	@Override
 	public Mat onCameraFrame(CvCameraViewFrame inputFrame) {
-		mGray = inputFrame.gray();
-		Imgproc.GaussianBlur(mGray, mTemp, new Size(5, 5), 0.0);
-		Imgproc.threshold(mTemp, mTemp, 200, 255, 0);
+		grayMat = inputFrame.gray();
+		int cols = grayMat.cols();
+		int rows = grayMat.rows();
+		
+		if(grayMatSize == null)  {
+			StartSubmats();
+			return grayMat;
+		}
+		
+		double matWidth = grayMatSize.width;
+		double matHeight = grayMatSize.height;
+		
+		if ((zoomCorner == null) || (zoomWindow == null) || (grayMat.cols() != matWidth) || (grayMat.rows() != matHeight)) {
+            StartSubmats();
+            return grayMat;
+		}
+		
+		System.out.println("ZoomWindow: " + zoomWindow.size().width + "x" + zoomWindow.size().height);
+		System.out.println("ZoomCorner: " + zoomCorner.size().width + "x" + zoomCorner.size().height);
+        
+        Imgproc.resize(zoomWindow, zoomCorner, zoomCorner.size());
+        
+        Imgproc.GaussianBlur(zoomCorner, tempMat, new Size(5, 5), 0.0);
+		Imgproc.threshold(tempMat, tempMat, 220, 255, 0);
 
-		System.out.println("frame size: " + mTemp.rows() + "x" + mTemp.cols() + " | type: " + mTemp.type());
-		Scalar dimSum = Core.sumElems(mTemp);
-		System.out.println("black sum: " + blackSum.val[0] + ", " + blackSum.val[1] + ", " + blackSum.val[2] + " | " + "dimSum: "
+        Size wsize = zoomWindow.size();
+        Core.rectangle(zoomWindow, new Point(1, 1), new Point(wsize.width - 2, wsize.height - 2), new Scalar(255, 0, 0, 255), 2);
+		
+		//System.out.println("frame size: " + tempMat.rows() + "x" + tempMat.cols());// + " | type: " + tempMat.type());
+		Scalar dimSum = Core.sumElems(tempMat);
+		System.out.println("black sum: " + blackSum.val[0] + ", "
+				+ blackSum.val[1] + ", " + blackSum.val[2] + " | " + "dimSum: "
 				+ dimSum.val[0] + ", " + dimSum.val[1] + ", " + dimSum.val[2]);
-		boolean match = blackSum.val[0] == dimSum.val[0]
-				&& blackSum.val[1] == dimSum.val[1]
-				&& blackSum.val[2] == dimSum.val[2];
+		boolean match = blackSum.val[0] == dimSum.val[0] && blackSum.val[1] == dimSum.val[1] && blackSum.val[2] == dimSum.val[2];
 		System.out.println("what's the word: " + match);
-		return mTemp;
+		return grayMat;
 	}
 
 	private void displayViewModeToUser() {
-		Toast.makeText(this, "Car 23", Toast.LENGTH_SHORT).show();
+		Toast.makeText(this, "Starting...", Toast.LENGTH_SHORT).show();
 	}
 }
