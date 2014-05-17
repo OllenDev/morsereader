@@ -14,6 +14,8 @@ import org.opencv.core.Size;
 import org.opencv.imgproc.Imgproc;
 
 import com.teamramrod.secertdecoder.R;
+import com.teamramrod.secretdecoder.morsetranslator.Frame;
+import com.teamramrod.secretdecoder.morsetranslator.Tanslator;
 
 import android.app.Activity;
 import android.content.Intent;
@@ -200,6 +202,8 @@ public class DecoderActivity extends Activity implements CvCameraViewListener2,
 		if(blackMat != null)
 			blackMat.release();
 	}
+	
+	Tanslator t;
 
 	@Override
 	public Mat onCameraFrame(CvCameraViewFrame inputFrame) {
@@ -238,6 +242,19 @@ public class DecoderActivity extends Activity implements CvCameraViewListener2,
 				+ dimSum.val[0] + ", " + dimSum.val[1] + ", " + dimSum.val[2]);
 		boolean match = blackSum.val[0] == dimSum.val[0] && blackSum.val[1] == dimSum.val[1] && blackSum.val[2] == dimSum.val[2];
 		System.out.println("what's the word: " + match);
+		
+		
+		if(t == null) {
+			t = new Tanslator();	
+		}
+		
+		t.addFrame(new Frame(!match));
+		String stuff = t.getMessage();
+		
+		if(stuff != null) {
+			t = null;
+		}
+		
 		return grayMat;
 	}
 
