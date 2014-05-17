@@ -34,7 +34,24 @@ public final class MorseDecoder {
 		return false;
 	}
 	
-	public static final Map<MorseStatus[], String> getMorseCodeMap(){
+	public static final MorseStatus getMorseStatus(List<Unit> units){
+		if(units != null && !units.isEmpty()){
+			for(Unit unit : units){
+				if(!unit.isOn() && units.size() == 1){
+					return MorseStatus.GAP;
+				}else{
+					if(isUnitOn(units, units.indexOf(unit)+1) && isUnitOn(units, units.indexOf(unit)+2)){
+						return MorseStatus.DASH;
+					}else{
+						return MorseStatus.DOT;
+					}
+				}
+			}
+		}
+		return null;
+	}
+	
+	private static final Map<MorseStatus[], String> getMorseCodeMap(){
 		Map<MorseStatus[], String> morseMap = new HashMap<MorseStatus[], String>();
 		MorseStatus a[] = {MorseStatus.DOT, MorseStatus.GAP, MorseStatus.DASH};
 		MorseStatus b[] = {MorseStatus.DASH, MorseStatus.GAP, MorseStatus.DOT, MorseStatus.GAP, MorseStatus.DOT, MorseStatus.GAP, MorseStatus.DOT};

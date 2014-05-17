@@ -15,68 +15,34 @@ public class Tanslator {
 	private static final int UNITS_PER_CHARACTER_SPACE = 3;
 	private static final int UNITS_PER_SENTINAL = 10;
 
-	public void findSentinal(){
+	public boolean findSentinal(){
 		if(units.size() >= UNITS_PER_SENTINAL){
 			//Make sure the last 6 units are on
 			int onCount = 0;
-			for (int i = units.size() - UNITS_PER_SENTINAL; i < units.size(); i++) {
+			for (int i = (units.size() - UNITS_PER_SENTINAL); i < units.size(); i++) {
 				if(MorseDecoder.isUnitOn(units, i)){
 					onCount += 1;
 				}
 			}
 			//Ensure the Units were on until the last unit, which was off
 			if(onCount == UNITS_PER_SENTINAL - 1 && !units.get(units.size()).isOn()){
-				if(record){
-					record = false;
-				}else{
-					record = true;
-				}
-				resetAll();
+				return true;
 			}
 		}
+		return false;
 	}
 	
-	public void addCharacter(){
-		//TODO if there are 3 GAPs in a row, there is a new character
-		if(units.size() >= UNITS_PER_CHARACTER_SPACE){
-			boolean allOff = true;
-			for(Unit unit : units){
-				if(unit.isOn()){
-					allOff = false;
-					break;
-				}
-			}
-			if(allOff){
-				setTranslation(getTranslation() + MorseDecoder.getCharacter(getUnits()));
-			}
-		}
-	}
-	
-	public void findWordBreak(){
-		//TODO if there are 7 GAPs in a row, there is a new character
-		if(units.size() == UNITS_PER_SPACE){
-			boolean allOff = true;
-			for(Unit unit : units){
-				if(unit.isOn()){
-					allOff = false;
-					break;
-				}
-			}
-			if(allOff){
-				setTranslation(getTranslation() );//TODO add the character to the string
-			}
+	//Record true and found sentinal
+	public String getMessage(){
+		String message = null;
+		boolean foundSentinal = findSentinal();
+		if(foundSentinal && record){
+			message = MessageProcessor.getTranslatedMessage(getUnits());
 			resetAll();
+		}else if(foundSentinal && !record){
+			record = true;
 		}
-	}
-	
-	public void processFrame(Frame frame){
-		addFrame(frame);
-		if(!record){
-			findSentinal();
-		}else{
-			addCharacter();
-			findWordBreak();
-		}
+		return message;
 	}
 	
 	public void resetFrames(){
@@ -112,6 +78,10 @@ public class Tanslator {
 	
 	public void addFrame(Frame frame){
 		frames.add(frame);
+		if(frames.size() >= FRAME_PER_UNIT){
+			units.add(new Unit(frames));
+			resetFrames();
+		}
 	}
 
 	public String getTranslation() {
