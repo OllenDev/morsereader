@@ -3,6 +3,8 @@ package com.teamramrod.secretdecoder.morsetranslator;
 import java.util.ArrayList;
 import java.util.List;
 
+import android.sax.StartElementListener;
+
 public class MessageProcessor {
 	private static final int UNITS_PER_SPACE = 7;
 	private static final int UNITS_PER_CHARACTER_SPACE = 3;
@@ -16,7 +18,7 @@ public class MessageProcessor {
 		List<String> characters = new ArrayList<String>();
 		if(words != null && !words.isEmpty()){
 			for(List<Unit> word : words){
-				characters.add(splitCharactersIntoLists(word));
+				characters.add(parseWordIntoString(word));
 			}
 		}
 
@@ -39,37 +41,36 @@ public class MessageProcessor {
 				offCount = 0;
 			}
 			if(offCount == UNITS_PER_SPACE){
-				wordEndIndex.add(units.indexOf(unit) - UNITS_PER_SPACE);
+				wordEndIndex.add(units.indexOf(unit) - UNITS_PER_SPACE+1);
 				if(units.indexOf(unit)+1 < units.size())
 				wordStartIndex.add(units.indexOf(unit)+1);
 			}
 		}
+		wordEndIndex.add(units.size());
 		for (int i = 0; i < wordEndIndex.size(); i++) {
 			wordLists.add(units.subList(0, wordEndIndex.get(0)));
 		}
 		return wordLists;
 	}
 	
-	private static final String splitCharactersIntoLists(List<Unit> units){
+	private static final String parseWordIntoString(List<Unit> units){
 		String word = "";
-		List<Integer> characterStartIndex = new ArrayList<Integer>();
-		List<Integer> characterEndIndex = new ArrayList<Integer>();
-		characterStartIndex.add(0);
+		int characterStartIndex = 0;
 		int offCount = 0;
-		for(Unit unit : units){
+		for(int i = 0; i < units.size(); i++){
+			Unit unit = units.get(i);
 			if(!unit.isOn()){
 				offCount += 1;
 			}else{
 				offCount = 0;
 			}
 			if(offCount == UNITS_PER_CHARACTER_SPACE){
-				characterEndIndex.add(units.indexOf(unit) - UNITS_PER_CHARACTER_SPACE);
-				if(units.indexOf(unit)+1 < units.size())
-				characterStartIndex.add(units.indexOf(unit)+1);
+				word = word + MorseDecoder.getCharacter(units.subList(characterStartIndex, i - UNITS_PER_CHARACTER_SPACE+1));
+				characterStartIndex = i +1;
+
+			}else if(i == units.size() - 1){
+				word = word + MorseDecoder.getCharacter(units.subList(characterStartIndex,i+1));
 			}
-		}
-		for (int i = 0; i < characterEndIndex.size(); i++) {
-			word = word + MorseDecoder.getCharacter(units.subList(0, characterEndIndex.get(0)));
 		}
 		return word + " ";
 

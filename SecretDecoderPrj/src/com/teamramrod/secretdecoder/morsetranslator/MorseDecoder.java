@@ -7,24 +7,11 @@ import java.util.Map;
 
 public final class MorseDecoder {
 
+	public final static Map<String, String> CHARACTER_MAP = getMorseCodeMap();
+	
 	public static String getCharacter(List<Unit> units){
 		//Convert the List of units to an array of MorseStatus
-		List<MorseStatus> statusList = new ArrayList<MorseStatus>();
-		if(units != null && !units.isEmpty()){
-			for(Unit unit : units){
-				if(!unit.isOn()){
-					statusList.add(MorseStatus.GAP);
-				}else{
-					if(isUnitOn(units, units.indexOf(unit)+1) && isUnitOn(units, units.indexOf(unit)+2)){
-						statusList.add(MorseStatus.DASH);
-					}else{
-						statusList.add(MorseStatus.DOT);
-					}
-				}
-			}
-		}
-		MorseStatus status[] = new MorseStatus[statusList.size()];
-		return getMorseCodeMap().get(statusList.toArray(status));
+		return CHARACTER_MAP.get(getMorseString(units));
 	}
 	
 	public static boolean isUnitOn(List<Unit> units, int index){
@@ -34,67 +21,87 @@ public final class MorseDecoder {
 		return false;
 	}
 	
-	public static final MorseStatus getMorseStatus(List<Unit> units){
+//	public static final MorseStatus getMorseStatus(List<Unit> units){
+//		if(units != null && !units.isEmpty()){
+//			for(Unit unit : units){
+//				if(!unit.isOn() && units.size() == 1){
+//					return MorseStatus.GAP;
+//				}else{
+//					if(isUnitOn(units, units.indexOf(unit)+1) && isUnitOn(units, units.indexOf(unit)+2)){
+//						return MorseStatus.DASH;
+//					}else{
+//						return MorseStatus.DOT;
+//					}
+//				}
+//			}
+//		}
+//		return null;
+//	}
+	
+	public static final String getMorseString(List<Unit> units){
+		String code = "";
 		if(units != null && !units.isEmpty()){
-			for(Unit unit : units){
-				if(!unit.isOn() && units.size() == 1){
-					return MorseStatus.GAP;
+			for(int i = 0; i < units.size(); i++){
+				Unit unit = units.get(i);
+				if(!unit.isOn()){
+					code = code + " ";
 				}else{
 					if(isUnitOn(units, units.indexOf(unit)+1) && isUnitOn(units, units.indexOf(unit)+2)){
-						return MorseStatus.DASH;
+						code = code + "-";
+						i=i+2;
 					}else{
-						return MorseStatus.DOT;
+						code = code + ".";
 					}
 				}
 			}
 		}
-		return null;
+		return code;
 	}
 	
-	private static final Map<MorseStatus[], String> getMorseCodeMap(){
-		Map<MorseStatus[], String> morseMap = new HashMap<MorseStatus[], String>();
-		MorseStatus a[] = {MorseStatus.DOT, MorseStatus.GAP, MorseStatus.DASH};
-		MorseStatus b[] = {MorseStatus.DASH, MorseStatus.GAP, MorseStatus.DOT, MorseStatus.GAP, MorseStatus.DOT, MorseStatus.GAP, MorseStatus.DOT};
-		MorseStatus c[] = {MorseStatus.DASH, MorseStatus.GAP, MorseStatus.DOT, MorseStatus.GAP, MorseStatus.DASH, MorseStatus.GAP, MorseStatus.DOT};
-		MorseStatus d[] = {MorseStatus.DASH, MorseStatus.GAP, MorseStatus.DOT, MorseStatus.GAP, MorseStatus.DOT};
-		MorseStatus e[] = {MorseStatus.DOT};
-		MorseStatus f[] = {MorseStatus.DOT, MorseStatus.GAP, MorseStatus.DOT, MorseStatus.GAP, MorseStatus.DASH};
-		MorseStatus g[] = {MorseStatus.DASH, MorseStatus.GAP, MorseStatus.DASH, MorseStatus.GAP, MorseStatus.DOT};
-		MorseStatus h[] = {MorseStatus.DOT, MorseStatus.GAP, MorseStatus.DOT, MorseStatus.GAP, MorseStatus.DOT, MorseStatus.GAP, MorseStatus.DOT};
-		MorseStatus i[] = {MorseStatus.DOT, MorseStatus.GAP, MorseStatus.DOT};
-		MorseStatus j[] = {MorseStatus.DOT, MorseStatus.GAP, MorseStatus.DASH, MorseStatus.GAP, MorseStatus.DASH, MorseStatus.GAP, MorseStatus.DASH};
-		MorseStatus k[] = {MorseStatus.DASH, MorseStatus.GAP, MorseStatus.DOT, MorseStatus.GAP, MorseStatus.DASH};
-		MorseStatus l[] = {MorseStatus.DOT, MorseStatus.GAP, MorseStatus.DASH, MorseStatus.GAP, MorseStatus.DOT, MorseStatus.GAP, MorseStatus.DOT};
-		MorseStatus m[] = {MorseStatus.DASH, MorseStatus.GAP, MorseStatus.DASH};
-		MorseStatus n[] = {MorseStatus.DASH, MorseStatus.GAP, MorseStatus.DOT};
-		MorseStatus o[] = {MorseStatus.DASH, MorseStatus.GAP, MorseStatus.DASH, MorseStatus.GAP, MorseStatus.DASH};
-		MorseStatus p[] = {MorseStatus.DOT, MorseStatus.GAP, MorseStatus.DASH, MorseStatus.GAP, MorseStatus.DASH, MorseStatus.GAP, MorseStatus.DOT};
-		MorseStatus q[] = {MorseStatus.DASH, MorseStatus.GAP, MorseStatus.DASH, MorseStatus.GAP, MorseStatus.DOT, MorseStatus.GAP, MorseStatus.DASH};
-		MorseStatus r[] = {MorseStatus.DOT, MorseStatus.GAP, MorseStatus.DASH, MorseStatus.GAP, MorseStatus.DOT};
-		MorseStatus s[] = {MorseStatus.DOT, MorseStatus.GAP, MorseStatus.DOT, MorseStatus.GAP, MorseStatus.DOT};
-		MorseStatus t[] = {MorseStatus.DASH};
-		MorseStatus u[] = {MorseStatus.DOT, MorseStatus.GAP, MorseStatus.DOT, MorseStatus.GAP, MorseStatus.DASH};
-		MorseStatus v[] = {MorseStatus.DOT, MorseStatus.GAP, MorseStatus.DOT, MorseStatus.GAP, MorseStatus.DOT, MorseStatus.GAP, MorseStatus.DASH};
-		MorseStatus w[] = {MorseStatus.DOT, MorseStatus.GAP, MorseStatus.DASH, MorseStatus.GAP, MorseStatus.DASH};
-		MorseStatus x[] = {MorseStatus.DASH, MorseStatus.GAP, MorseStatus.DOT, MorseStatus.GAP, MorseStatus.DOT, MorseStatus.GAP, MorseStatus.DASH};
-		MorseStatus y[] = {MorseStatus.DASH, MorseStatus.GAP, MorseStatus.DOT, MorseStatus.GAP, MorseStatus.DASH, MorseStatus.DASH};
-		MorseStatus z[] = {MorseStatus.DASH, MorseStatus.GAP, MorseStatus.DASH, MorseStatus.GAP, MorseStatus.DOT, MorseStatus.GAP, MorseStatus.DOT};
-		MorseStatus one[] = {MorseStatus.DOT, MorseStatus.GAP, MorseStatus.DASH, MorseStatus.GAP, MorseStatus.DASH, MorseStatus.GAP, MorseStatus.DASH, MorseStatus.GAP, MorseStatus.DASH};
-		MorseStatus two[] = {MorseStatus.DOT, MorseStatus.GAP, MorseStatus.DOT, MorseStatus.GAP, MorseStatus.DASH, MorseStatus.GAP, MorseStatus.DASH, MorseStatus.GAP, MorseStatus.DASH};
-		MorseStatus three[] = {MorseStatus.DOT, MorseStatus.GAP, MorseStatus.DOT, MorseStatus.GAP, MorseStatus.DOT, MorseStatus.GAP, MorseStatus.DASH, MorseStatus.GAP, MorseStatus.DASH};
-		MorseStatus four[] = {MorseStatus.DOT, MorseStatus.GAP, MorseStatus.DOT, MorseStatus.GAP, MorseStatus.DOT, MorseStatus.GAP, MorseStatus.DOT, MorseStatus.GAP, MorseStatus.DASH};
-		MorseStatus five[] = {MorseStatus.DOT, MorseStatus.GAP, MorseStatus.DOT, MorseStatus.GAP, MorseStatus.DOT, MorseStatus.GAP, MorseStatus.DOT, MorseStatus.GAP, MorseStatus.DOT};
-		MorseStatus six[] = {MorseStatus.DASH, MorseStatus.GAP, MorseStatus.DOT, MorseStatus.GAP, MorseStatus.DOT, MorseStatus.GAP, MorseStatus.DOT, MorseStatus.GAP, MorseStatus.DOT};
-		MorseStatus seven[] = {MorseStatus.DASH, MorseStatus.GAP, MorseStatus.DASH, MorseStatus.GAP, MorseStatus.DOT, MorseStatus.GAP, MorseStatus.DOT, MorseStatus.GAP, MorseStatus.DOT};
-		MorseStatus eight[] = {MorseStatus.DASH, MorseStatus.GAP, MorseStatus.DASH, MorseStatus.GAP, MorseStatus.DASH, MorseStatus.GAP, MorseStatus.DOT, MorseStatus.GAP, MorseStatus.DOT};
-		MorseStatus nine[] = {MorseStatus.DASH, MorseStatus.GAP, MorseStatus.DASH, MorseStatus.GAP, MorseStatus.DASH, MorseStatus.GAP, MorseStatus.DASH, MorseStatus.GAP, MorseStatus.DOT};
-		MorseStatus zero[] = {MorseStatus.DOT, MorseStatus.GAP, MorseStatus.DOT, MorseStatus.GAP, MorseStatus.DASH, MorseStatus.GAP, MorseStatus.DASH, MorseStatus.GAP, MorseStatus.DASH};
-		morseMap.put(a, "a");
-		morseMap.put(b, "b");
-		morseMap.put(c, "c");
-		morseMap.put(d, "d");
-		morseMap.put(e, "e");
-		morseMap.put(f, "f");
+	private static final Map<String, String> getMorseCodeMap(){
+		Map<String, String> morseMap = new HashMap<String, String>();
+		String a = "."+" "+"-";
+		String b = "-"+" "+"."+" "+"."+" "+".";
+		String c = "-"+" "+"."+" "+"-"+" "+".";
+		String d = "-"+" "+"."+" "+".";
+		String e = ".";
+		String f = "."+" "+"."+" "+"-";
+		String g = "-"+" "+"-"+" "+".";
+		String h = "."+" "+"."+" "+"."+" "+".";
+		String i = "."+" "+".";
+		String j = "."+" "+"-"+" "+"-"+" "+"-";
+		String k = "-"+" "+"."+" "+"-";
+		String l = "."+" "+"-"+" "+"."+" "+".";
+		String m = "-"+" "+"-";
+		String n = "-"+" "+".";
+		String o = "-"+" "+"-"+" "+"-";
+		String p = "."+" "+"-"+" "+"-"+" "+".";
+		String q = "-"+" "+"-"+" "+"."+" "+"-";
+		String r = "."+" "+"-"+" "+".";
+		String s = "."+" "+"."+" "+".";
+		String t = "-";
+		String u = "."+" "+"."+" "+"-";
+		String v = "."+" "+"."+" "+"."+" "+"-";
+		String w = "."+" "+"-"+" "+"-";
+		String x = "-"+" "+"."+" "+"."+" "+"-";
+		String y = "-"+" "+"."+" "+"-"+"-";
+		String z = "-"+" "+"-"+" "+"."+" "+".";
+		String one = "."+" "+"-"+" "+"-"+" "+"-"+" "+"-";
+		String two = "."+" "+"."+" "+"-"+" "+"-"+" "+"-";
+		String three = "."+" "+"."+" "+"."+" "+"-"+" "+"-";
+		String four = "."+" "+"."+" "+"."+" "+"."+" "+"-";
+		String five = "."+" "+"."+" "+"."+" "+"."+" "+".";
+		String six = "-"+" "+"."+" "+"."+" "+"."+" "+".";
+		String seven = "-"+" "+"-"+" "+"."+" "+"."+" "+".";
+		String eight = "-"+" "+"-"+" "+"-"+" "+"."+" "+".";
+		String nine = "-"+" "+"-"+" "+"-"+" "+"-"+" "+".";
+		String zero = "."+" "+"."+" "+"-"+" "+"-"+" "+"-";
+		morseMap.put(a,"a");
+		morseMap.put(b,"b");
+		morseMap.put(c,"c");
+		morseMap.put(d,"d");
+		morseMap.put(e,"e");
+		morseMap.put(f,"f");
 		morseMap.put(g, "g");
 		morseMap.put(h, "h");
 		morseMap.put(i, "i");
