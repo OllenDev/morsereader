@@ -13,25 +13,32 @@ public class Tanslator {
 	private static final int FRAME_PER_UNIT = 15;
 	private static final int UNITS_PER_SPACE = 7;
 	private static final int UNITS_PER_CHARACTER_SPACE = 3;
-	private static final int UNITS_PER_SENTINAL = 9;
+	private static final int UNITS_PER_SENTINAL = 10;
 
-	public void startMessage(){
-		if(units.size() == UNITS_PER_SENTINAL){
-			boolean allOn = false;
-			for(Unit unit : units){
-				if(unit.isOn()){
-					allOn = true;
+	public void findSentinal(){
+		if(units.size() >= UNITS_PER_SENTINAL){
+			//Make sure the last 6 units are on
+			int onCount = 0;
+			for (int i = units.size() - UNITS_PER_SENTINAL; i < units.size(); i++) {
+				if(MorseDecoder.isUnitOn(units, i)){
+					onCount += 1;
 				}
 			}
-			if(allOn){
-				record = true;
+			//Ensure the Units were on until the last unit, which was off
+			if(onCount == UNITS_PER_SENTINAL - 1 && !units.get(units.size()).isOn()){
+				if(record){
+					record = false;
+				}else{
+					record = true;
+				}
+				resetAll();
 			}
 		}
 	}
 	
-	public void findCharacterBreak(){
+	public void addCharacter(){
 		//TODO if there are 3 GAPs in a row, there is a new character
-		if(units.size() == UNITS_PER_CHARACTER_SPACE){
+		if(units.size() >= UNITS_PER_CHARACTER_SPACE){
 			boolean allOff = true;
 			for(Unit unit : units){
 				if(unit.isOn()){
@@ -40,7 +47,7 @@ public class Tanslator {
 				}
 			}
 			if(allOff){
-				setTranslation(getTranslation() );//TODO add the character to the string
+				setTranslation(getTranslation() + MorseDecoder.getCharacter(getUnits()));
 			}
 		}
 	}
@@ -59,6 +66,16 @@ public class Tanslator {
 				setTranslation(getTranslation() );//TODO add the character to the string
 			}
 			resetAll();
+		}
+	}
+	
+	public void processFrame(Frame frame){
+		addFrame(frame);
+		if(!record){
+			findSentinal();
+		}else{
+			addCharacter();
+			findWordBreak();
 		}
 	}
 	
@@ -95,7 +112,6 @@ public class Tanslator {
 	
 	public void addFrame(Frame frame){
 		frames.add(frame);
-		
 	}
 
 	public String getTranslation() {

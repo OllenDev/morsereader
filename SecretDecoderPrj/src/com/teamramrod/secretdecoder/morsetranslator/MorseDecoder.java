@@ -1,13 +1,37 @@
 package com.teamramrod.secretdecoder.morsetranslator;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class MorseDecoder {
+public final class MorseDecoder {
 
-	public String getCharacterFromCode(List<Unit> units){
-		return null;
+	public static String getCharacter(List<Unit> units){
+		//Convert the List of units to an array of MorseStatus
+		List<MorseStatus> statusList = new ArrayList<MorseStatus>();
+		if(units != null && !units.isEmpty()){
+			for(Unit unit : units){
+				if(!unit.isOn()){
+					statusList.add(MorseStatus.GAP);
+				}else{
+					if(isUnitOn(units, units.indexOf(unit)+1) && isUnitOn(units, units.indexOf(unit)+2)){
+						statusList.add(MorseStatus.DASH);
+					}else{
+						statusList.add(MorseStatus.DOT);
+					}
+				}
+			}
+		}
+		MorseStatus status[] = new MorseStatus[statusList.size()];
+		return getMorseCodeMap().get(statusList.toArray(status));
+	}
+	
+	public static boolean isUnitOn(List<Unit> units, int index){
+		if(index < units.size() && units.get(index).isOn()){
+			return true;
+		}
+		return false;
 	}
 	
 	public static final Map<MorseStatus[], String> getMorseCodeMap(){

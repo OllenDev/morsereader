@@ -4,6 +4,8 @@ import java.util.List;
 
 public class Unit {
 
+	public static final int ON_THRESHOLD = 10; 
+	
 	private List<Frame> frames;
 
 	public Unit(List<Frame> frames) {
@@ -23,7 +25,20 @@ public class Unit {
 	}
 	
 	public boolean isOn(){
-		//TODO
+		if(frames != null && !frames.isEmpty()){
+			int onCount = 0;
+			for(Frame frame : frames){
+				if(frame.isOn()){
+					onCount += 1;
+				}
+			}
+			if(onCount >= ON_THRESHOLD){
+				return true;
+			}
+		}
+		
 		return false;
 	}
+	
+	
 }
