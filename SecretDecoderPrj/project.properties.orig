@@ -11,5 +11,10 @@
 #proguard.config=${sdk.dir}/tools/proguard/proguard-android.txt:proguard-project.txt
 
 # Project target.
+<<<<<<< HEAD
+target=android-19
+android.library.reference.1=../../../../Downloads/OpenCV-2.4.9-android-sdk/sdk/java
+=======
 target=Google Inc.:Glass Development Kit Preview:19
-android.library.reference.1=../../Android/OpenCV-2.4.9-android-sdk/sdk/java
+android.library.reference.1=../../../../eclipse/OpenCV Library - 2.4.9
+>>>>>>> framefinder
